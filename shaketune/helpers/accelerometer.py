@@ -33,7 +33,8 @@ class Measurement(TypedDict):
 
 
 class MeasurementsManager:
-    def __init__(self):
+    def __init__(self, klipper_reactor):
+        self._reactor = klipper_reactor
         self.measurements: List[Measurement] = []
         self._write_process = None
 
@@ -124,16 +125,16 @@ class MeasurementsManager:
 
         return self.measurements
 
-    def wait_for_file_writes(self, k_reactor, timeout: int = 20):
+    def wait_for_file_writes(self, timeout: int = 20):
         if self._write_process is None:
             return  # No file write is pending
 
-        eventtime = k_reactor.monotonic()
+        eventtime = self._reactor.monotonic()
         endtime = eventtime + timeout
         complete = False
 
         while eventtime < endtime:
-            eventtime = k_reactor.pause(eventtime + 0.05)
+            eventtime = self._reactor.pause(eventtime + 0.05)
             if not self._write_process.is_alive():
                 complete = True
                 break
@@ -148,8 +149,9 @@ class MeasurementsManager:
 
 
 class Accelerometer:
-    def __init__(self, klipper_accelerometer):
+    def __init__(self, klipper_accelerometer, klipper_reactor):
         self._k_accelerometer = klipper_accelerometer
+        self._reactor = klipper_reactor
         self._bg_client = None
         self._measurements_manager: MeasurementsManager = None
 
@@ -163,7 +165,12 @@ class Accelerometer:
                 return chip_name
         return None
 
-    def start_recording(self, measurements_manager: MeasurementsManager, name: str = None, append_time: bool = True):
+    def start_recording(
+        self, measurements_manager: MeasurementsManager = None, name: str = None, append_time: bool = True
+    ):
+        if measurements_manager is None:
+            measurements_manager = MeasurementsManager(self._reactor)
+
         if self._bg_client is None:
             self._bg_client = self._k_accelerometer.start_internal_client()
 
@@ -181,18 +188,39 @@ class Accelerometer:
         else:
             raise ValueError('Recording already started!')
 
-    def stop_recording(self) -> MeasurementsManager:
+    def stop_recording(self, timeout: int = 20) -> MeasurementsManager:
         if self._bg_client is None:
             ConsoleOutput.print('Warning: no recording to stop!')
             return None
 
+        # Move sample retrieval and processing to a sub-process to reduce Klipper's main process load
+        offload_process = Process(target=self._retrieve_and_process_samples)
+        offload_process.start()
+
+        eventtime = self._reactor.monotonic()
+        endtime = eventtime + timeout
+        complete = False
+        while eventtime < endtime:
+            eventtime = self._reactor.pause(eventtime + 0.05)
+            if not offload_process.is_alive():
+                complete = True
+                break
+
+        if not complete:
+            raise TimeoutError(
+                'Shake&Tune was unable to retrieve the accelerometer '
+                'data and process it within the specified timeout!'
+            )
+
+        m_manager = self._measurements_manager
+        self._measurements_manager = None
+
+        return m_manager
+
+    def _retrieve_and_process_samples(self):
         bg_client = self._bg_client
         self._bg_client = None
         bg_client.finish_measurements()
 
         samples = bg_client.samples or bg_client.get_samples()
         self._measurements_manager.append_samples_to_last_measurement(samples)
-        m_manager = self._measurements_manager
-        self._measurements_manager = None
-
-        return m_manager

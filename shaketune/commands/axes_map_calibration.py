@@ -9,7 +9,7 @@
 #              and performs post-processing to analyze the collected data.
 
 
-from ..helpers.accelerometer import Accelerometer, MeasurementsManager
+from ..helpers.accelerometer import Accelerometer
 from ..helpers.console_output import ConsoleOutput
 from ..shaketune_process import ShakeTuneProcess
 
@@ -37,7 +37,7 @@ def axes_map_calibration(gcmd, config, st_process: ShakeTuneProcess) -> None:
         raise gcmd.error(
             f'The parameter axes_map is already set in your {accel_chip} configuration! Please remove it (or set it to "x,y,z") to be able to use this macro!'
         )
-    accelerometer = Accelerometer(k_accelerometer)
+    accelerometer = Accelerometer(k_accelerometer, printer.get_reactor())
 
     toolhead_info = toolhead.get_status(systime)
     old_accel = toolhead_info['max_accel']
@@ -69,14 +69,12 @@ def axes_map_calibration(gcmd, config, st_process: ShakeTuneProcess) -> None:
     toolhead.move([mid_x - SEGMENT_LENGTH / 2, mid_y - SEGMENT_LENGTH / 2, z_height, E], feedrate_travel)
     toolhead.dwell(0.5)
 
-    measurements_manager = MeasurementsManager()
-
     # Start the measurements and do the movements (+X, +Y and then +Z)
-    accelerometer.start_recording(measurements_manager, name='axesmap_X', append_time=True)
+    accelerometer.start_recording(None, name='axesmap_X', append_time=True)
     toolhead.dwell(0.5)
     toolhead.move([mid_x + SEGMENT_LENGTH / 2, mid_y - SEGMENT_LENGTH / 2, z_height, E], speed)
     toolhead.dwell(0.5)
-    accelerometer.stop_recording()
+    measurements_manager = accelerometer.stop_recording()
     toolhead.dwell(0.5)
     accelerometer.start_recording(measurements_manager, name='axesmap_Y', append_time=True)
     toolhead.dwell(0.5)
