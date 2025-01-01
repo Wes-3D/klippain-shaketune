@@ -1,7 +1,8 @@
 #!/bin/bash
 
-USER_CONFIG_PATH="${HOME}/printer_data/config"
-MOONRAKER_CONFIG="${HOME}/printer_data/config/moonraker.conf"
+USER_CONFIG1_PATH="${HOME}/e3pro_data/config"
+USER_CONFIG2_PATH="${HOME}/e3max_data/config"
+MOONRAKER_CONFIG1="${HOME}/e3pro_data/config/moonraker.conf"
 KLIPPER_PATH="${HOME}/klipper"
 KLIPPER_VENV_PATH="${KLIPPER_VENV:-${HOME}/klippy-env}"
 
@@ -95,18 +96,35 @@ function setup_venv {
     printf "\n"
 }
 
-function link_extension {
+function link_extension1 {
     # Reusing the old linking extension function to cleanup and remove the macros for older S&T versions
 
-    if [ -d "${HOME}/klippain_config" ] && [ -f "${USER_CONFIG_PATH}/.VERSION" ]; then
-        if [ -d "${USER_CONFIG_PATH}/scripts/K-ShakeTune" ]; then
+    if [ -d "${HOME}/klippain_config" ] && [ -f "${USER_CONFIG1_PATH}/.VERSION" ]; then
+        if [ -d "${USER_CONFIG1_PATH}/scripts/K-ShakeTune" ]; then
             echo "[INFO] Old K-Shake&Tune macro folder found, cleaning it!"
-            rm -d "${USER_CONFIG_PATH}/scripts/K-ShakeTune"
+            rm -d "${USER_CONFIG1_PATH}/scripts/K-ShakeTune"
         fi
     else
-        if [ -d "${USER_CONFIG_PATH}/K-ShakeTune" ]; then
+        if [ -d "${USER_CONFIG1_PATH}/K-ShakeTune" ]; then
             echo "[INFO] Old K-Shake&Tune macro folder found, cleaning it!"
-            rm -d "${USER_CONFIG_PATH}/K-ShakeTune"
+            rm -d "${USER_CONFIG1_PATH}/K-ShakeTune"
+        fi
+    fi
+}
+
+
+function link_extension2 {
+    # Reusing the old linking extension function to cleanup and remove the macros for older S&T versions
+
+    if [ -d "${HOME}/klippain_config" ] && [ -f "${USER_CONFIG2_PATH}/.VERSION" ]; then
+        if [ -d "${USER_CONFIG2_PATH}/scripts/K-ShakeTune" ]; then
+            echo "[INFO] Old K-Shake&Tune macro folder found, cleaning it!"
+            rm -d "${USER_CONFIG2_PATH}/scripts/K-ShakeTune"
+        fi
+    else
+        if [ -d "${USER_CONFIG2_PATH}/K-ShakeTune" ]; then
+            echo "[INFO] Old K-Shake&Tune macro folder found, cleaning it!"
+            rm -d "${USER_CONFIG2_PATH}/K-ShakeTune"
         fi
     fi
 }
@@ -120,11 +138,11 @@ function link_module {
     fi
 }
 
-function add_updater {
-    update_section=$(grep -c '\[update_manager[a-z ]* Klippain-ShakeTune\]' $MOONRAKER_CONFIG || true)
+function add_updater1 {
+    update_section=$(grep -c '\[update_manager[a-z ]* Klippain-ShakeTune\]' $MOONRAKER_CONFIG1 || true)
     if [ "$update_section" -eq 0 ]; then
         echo -n "[INSTALL] Adding update manager to moonraker.conf..."
-        cat <<EOF >>$MOONRAKER_CONFIG
+        cat <<EOF >>$MOONRAKER_CONFIG1
 
 ## Klippain Shake&Tune automatic update management
 [update_manager Klippain-ShakeTune]
@@ -160,8 +178,9 @@ printf "=============================================\n\n"
 preflight_checks
 check_download
 setup_venv
-link_extension
+link_extension1
+link_extension2
 link_module
-add_updater
+#add_updater1
 restart_klipper
 restart_moonraker
