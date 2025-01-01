@@ -9,6 +9,8 @@ KLIPPER_VENV_PATH="${KLIPPER_VENV:-${HOME}/klippy-env}"
 OLD_K_SHAKETUNE_VENV="${HOME}/klippain_shaketune-env"
 K_SHAKETUNE_PATH="${HOME}/klippain_shaketune"
 
+SOURCE_URL="https://github.com/minky-tech/klippain-shaketune.git"
+
 set -eu
 export LC_ALL=C
 
@@ -24,7 +26,7 @@ function preflight_checks {
         exit -1
     fi
 
-    if [ "$(sudo systemctl list-units --full -all -t service --no-legend | grep -F 'klipper.service')" ]; then
+    if [ "$(sudo systemctl list-units --full -all -t service --no-legend | grep -F 'klipper-e3pro.service')" ]; then
         printf "[PRE-CHECK] Klipper service found! Continuing...\n\n"
     else
         echo "[ERROR] Klipper service not found, please install Klipper first!"
@@ -65,7 +67,7 @@ function check_download {
 
     if [ ! -d "${K_SHAKETUNE_PATH}" ]; then
         echo "[DOWNLOAD] Downloading Klippain Shake&Tune module repository..."
-        if git -C $shaketunedirname clone https://github.com/Frix-x/klippain-shaketune.git $shaketunebasename; then
+        if git -C $shaketunedirname clone https://github.com/minky-tech/klippain-shaketune.git $shaketunebasename; then
             chmod +x ${K_SHAKETUNE_PATH}/install.sh
             printf "[DOWNLOAD] Download complete!\n\n"
         else
@@ -147,7 +149,7 @@ function add_updater1 {
 ## Klippain Shake&Tune automatic update management
 [update_manager Klippain-ShakeTune]
 type: git_repo
-origin: https://github.com/Frix-x/klippain-shaketune.git
+origin: ${SOURCE_URL}
 path: ~/klippain_shaketune
 virtualenv: ${KLIPPER_VENV_PATH}
 requirements: requirements.txt
