@@ -3,6 +3,7 @@
 USER_CONFIG1_PATH="${HOME}/e3pro_data/config"
 USER_CONFIG2_PATH="${HOME}/e3max_data/config"
 MOONRAKER_CONFIG1="${HOME}/e3pro_data/config/moonraker.conf"
+MOONRAKER_CONFIG2="${HOME}/e3max_data/config/moonraker.conf"
 KLIPPER_PATH="${HOME}/klipper"
 KLIPPER_VENV_PATH="${KLIPPER_VENV:-${HOME}/klippy-env}"
 
@@ -160,6 +161,26 @@ EOF
     fi
 }
 
+function add_updater2 {
+    update_section=$(grep -c '\[update_manager[a-z ]* Klippain-ShakeTune\]' $MOONRAKER_CONFIG2 || true)
+    if [ "$update_section" -eq 0 ]; then
+        echo -n "[INSTALL] Adding update manager to moonraker.conf..."
+        cat <<EOF >>$MOONRAKER_CONFIG2
+
+## Klippain Shake&Tune automatic update management
+[update_manager Klippain-ShakeTune]
+type: git_repo
+origin: ${SOURCE_URL}
+path: ~/klippain_shaketune
+virtualenv: ${KLIPPER_VENV_PATH}
+requirements: requirements.txt
+system_dependencies: system-dependencies.json
+primary_branch: main
+managed_services: klipper
+EOF
+    fi
+}
+
 function restart_klipper {
     echo "[POST-INSTALL] Restarting Klipper..."
     sudo systemctl restart klipper-e3pro
@@ -185,6 +206,7 @@ setup_venv
 link_extension1
 link_extension2
 link_module
-#add_updater1
+add_updater1
+add_updater2
 restart_klipper
 restart_moonraker
