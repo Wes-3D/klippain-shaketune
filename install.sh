@@ -162,12 +162,14 @@ EOF
 
 function restart_klipper {
     echo "[POST-INSTALL] Restarting Klipper..."
-    sudo systemctl restart klipper
+    sudo systemctl restart klipper-e3pro
+    sudo systemctl restart klipper-e3max
 }
 
 function restart_moonraker {
     echo "[POST-INSTALL] Restarting Moonraker..."
-    sudo systemctl restart moonraker
+    sudo systemctl restart moonraker-e3pro
+    sudo systemctl restart moonraker-e3max
 }
 
 
