@@ -10,7 +10,7 @@ KLIPPER_VENV_PATH="${KLIPPER_VENV:-${HOME}/klippy-env}"
 OLD_K_SHAKETUNE_VENV="${HOME}/klippain_shaketune-env"
 K_SHAKETUNE_PATH="${HOME}/klippain_shaketune"
 
-SOURCE_URL="https://github.com/minky-tech/klippain-shaketune.git"
+SOURCE_URL="https://github.com/Wes-3D/klippain-shaketune.git"
 
 set -eu
 export LC_ALL=C
@@ -68,7 +68,7 @@ function check_download {
 
     if [ ! -d "${K_SHAKETUNE_PATH}" ]; then
         echo "[DOWNLOAD] Downloading Klippain Shake&Tune module repository..."
-        if git -C $shaketunedirname clone https://github.com/minky-tech/klippain-shaketune.git $shaketunebasename; then
+        if git -C $shaketunedirname clone https://github.com/Wes-3D/klippain-shaketune.git $shaketunebasename; then
             chmod +x ${K_SHAKETUNE_PATH}/install.sh
             printf "[DOWNLOAD] Download complete!\n\n"
         else
